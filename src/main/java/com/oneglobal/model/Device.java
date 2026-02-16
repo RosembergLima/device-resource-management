@@ -12,13 +12,16 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "devices")
-@Data @NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor @AllArgsConstructor @Builder
 public class Device {
 
   @Id
@@ -31,6 +34,7 @@ public class Device {
   @Column(nullable = false, length = 50)
   private String brand;
 
+  @Builder.Default
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private DeviceStateEnum state = DeviceStateEnum.AVAILABLE;

@@ -1,92 +1,66 @@
 package com.oneglobal.service;
 
+import com.oneglobal.dto.DevicePatchRequest;
 import com.oneglobal.dto.DeviceRequest;
 import com.oneglobal.dto.DeviceResponse;
 import com.oneglobal.enums.DeviceStateEnum;
+import com.oneglobal.mapper.DeviceMapper;
 import com.oneglobal.model.Device;
 import com.oneglobal.repository.DeviceRepository;
 import com.oneglobal.service.exception.DeviceInUseException;
 import com.oneglobal.service.exception.DeviceNotFoundException;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class DeviceService {
 
   private final DeviceRepository repository;
-  private final ModelMapper mapper;
+  private final DeviceMapper mapper;
 
+  @Transactional
   public DeviceResponse create(DeviceRequest req) {
-    Device device = mapper.map(req, Device.class);
-    return mapper.map(repository.save(device), DeviceResponse.class);
+    Device device = mapper.toEntity(req);
+    return mapper.toResponse(repository.save(device));
   }
 
-  public DeviceResponse update(Long id, DeviceRequest req) {   // full update (PUT)
+  @Transactional
+  public DeviceResponse partialUpdate(Long id, DevicePatchRequest req) {
     Device device = findOrThrow(id);
-
     if (device.getState() == DeviceStateEnum.IN_USE) {
-      if (!device.getName().equals(req.name()) || !device.getBrand().equals(req.brand())) {
-        throw new DeviceInUseException("Name and brand cannot be updated when device is IN_USE");
-      }
+        throw new DeviceInUseException("Cannot update the device with state IN_USE");
     }
-
-    device.setName(req.name());
-    device.setBrand(req.brand());
-    device.setState(req.state());
-
-    return mapper.map(repository.save(device), DeviceResponse.class);
-  }
-
-  public DeviceResponse partialUpdate(Long id, DeviceRequest req) {  // partial (PATCH)
-    Device device = findOrThrow(id);
-
-    if (device.getState() == DeviceStateEnum.IN_USE) {
-      if (req.name() != null && !device.getName().equals(req.name())) {
-        throw new DeviceInUseException("Cannot update name when device is IN_USE");
-      }
-      if (req.brand() != null && !device.getBrand().equals(req.brand())) {
-        throw new DeviceInUseException("Cannot update brand when device is IN_USE");
-      }
-    }
-
-    if (req.name() != null) device.setName(req.name());
-    if (req.brand() != null) device.setBrand(req.brand());
-    if (req.state() != null) device.setState(req.state());
-
-    return mapper.map(repository.save(device), DeviceResponse.class);
+    mapper.updateEntityFromPatchDto(req, device);
+    return mapper.toResponse(repository.save(device));
   }
 
   public DeviceResponse findById(Long id) {
-    return mapper.map(findOrThrow(id), DeviceResponse.class);
+    return mapper.toResponse(findOrThrow(id));
   }
 
-  public List<DeviceResponse> findAll() {
-    return repository.findAll().stream()
-        .map(d -> mapper.map(d, DeviceResponse.class))
-        .toList();
+  public Page<DeviceResponse> findAll(String brand, DeviceStateEnum state, Pageable pageable) {
+    if (brand != null && state != null) {
+      return repository.findByBrandIgnoreCaseAndState(brand, state, pageable).map(mapper::toResponse);
+    } else if (brand != null) {
+      return repository.findByBrandIgnoreCase(brand, pageable).map(mapper::toResponse);
+    } else if (state != null) {
+      return repository.findByState(state, pageable).map(mapper::toResponse);
+    }
+    return repository.findAll(pageable).map(mapper::toResponse);
   }
 
-  public List<DeviceResponse> findByBrand(String brand) {
-    return repository.findByBrandIgnoreCase(brand).stream()
-        .map(d -> mapper.map(d, DeviceResponse.class))
-        .toList();
-  }
-
-  public List<DeviceResponse> findByState(DeviceStateEnum state) {
-    return repository.findByState(state).stream()
-        .map(d -> mapper.map(d, DeviceResponse.class))
-        .toList();
-  }
-
+  @Transactional
   public void delete(Long id) {
     Device device = findOrThrow(id);
     if (device.getState() == DeviceStateEnum.IN_USE) {
       throw new DeviceInUseException("In-use devices cannot be deleted");
     }
-    repository.deleteById(id);
+    repository.delete(device);
   }
 
   private Device findOrThrow(Long id) {

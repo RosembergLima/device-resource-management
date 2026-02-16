@@ -1,21 +1,23 @@
 package com.oneglobal.controller;
 
+import com.oneglobal.dto.DevicePatchRequest;
 import com.oneglobal.dto.DeviceRequest;
 import com.oneglobal.dto.DeviceResponse;
 import com.oneglobal.enums.DeviceStateEnum;
 import com.oneglobal.service.DeviceService;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,16 +35,11 @@ public class DeviceController {
   }
 
   @GetMapping
-  public List<DeviceResponse> findAll() { return service.findAll(); }
-
-  @GetMapping("/brand/{brand}")
-  public List<DeviceResponse> findByBrand(@PathVariable String brand) {
-    return service.findByBrand(brand);
-  }
-
-  @GetMapping("/state/{state}")
-  public List<DeviceResponse> findByState(@PathVariable DeviceStateEnum state) {
-    return service.findByState(state);
+  public Page<DeviceResponse> findAll(
+      @RequestParam(required = false) String brand,
+      @RequestParam(required = false) DeviceStateEnum state,
+      Pageable pageable) {
+    return service.findAll(brand, state, pageable);
   }
 
   @GetMapping("/{id}")
@@ -50,13 +47,8 @@ public class DeviceController {
     return service.findById(id);
   }
 
-  @PutMapping("/{id}")           // full update
-  public DeviceResponse update(@PathVariable Long id, @Valid @RequestBody DeviceRequest req) {
-    return service.update(id, req);
-  }
-
-  @PatchMapping("/{id}")         // partial update
-  public DeviceResponse partialUpdate(@PathVariable Long id, @RequestBody DeviceRequest req) {
+  @PatchMapping("/{id}")
+  public DeviceResponse partialUpdate(@PathVariable Long id, @RequestBody DevicePatchRequest req) {
     return service.partialUpdate(id, req);
   }
 

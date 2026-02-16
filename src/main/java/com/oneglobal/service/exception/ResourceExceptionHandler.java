@@ -1,11 +1,9 @@
 package com.oneglobal.service.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,15 +26,20 @@ public class ResourceExceptionHandler {
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<List<StandardError>> methodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request){
-    List<StandardError> errors = new ArrayList<>();
-    for(ObjectError error : e.getBindingResult().getAllErrors()){
-      StandardError err = new StandardError(System.currentTimeMillis(), HttpStatus.BAD_REQUEST.value(),
-           error.getDefaultMessage(), request.getRequestURI());
-      errors.add(err);
-    }
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+  public ResponseEntity<ValidationError> methodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request){
+    List<ValidationError.FieldError> fieldErrors = e.getBindingResult().getFieldErrors().stream()
+        .map(fe -> new ValidationError.FieldError(fe.getField(), fe.getDefaultMessage()))
+        .toList();
+    
+    ValidationError err = new ValidationError(
+        System.currentTimeMillis(),
+        HttpStatus.BAD_REQUEST.value(),
+        "Validation error",
+        request.getRequestURI(),
+        fieldErrors
+    );
+    
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
   }
-
 
 }

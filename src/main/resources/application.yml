@@ -1,0 +1,30 @@
+spring:
+  application:
+    name: "device-resources-api"
+  datasource:
+    url: jdbc:postgresql://localhost:5432/device_management
+    username: postgres
+    password: postgres
+  flyway:
+    enabled: true
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    basePath: /api
+  api-docs:
+    path: /api-docs
+    enabled: true
+    groups:
+      enabled: true
+
+swagger:
+  url: http://localhost:8080
+  title: Device Resources API
+  description: Device Resources API Documentation
+  version: 1.0.0
+

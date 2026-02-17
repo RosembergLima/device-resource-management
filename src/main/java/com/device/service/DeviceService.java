@@ -25,6 +25,13 @@ public class DeviceService {
   private final DeviceRepository repository;
   private final DeviceMapper mapper;
 
+  /**
+   * Persists a new device with default state AVAILABLE.
+   * Transactional write to ensure atomicity.
+   *
+   * @param req creation payload
+   * @return persisted device representation
+   */
   @Transactional
   public DeviceResponse create(DeviceRequest req) {
     Device device = mapper.toEntity(req);
@@ -32,6 +39,14 @@ public class DeviceService {
     return mapper.toResponse(repository.save(device));
   }
 
+  /**
+   * Applies a partial update to a device. Non-null fields in the request are copied to the entity.
+   *
+   * @param id device identifier
+   * @param req patch payload (nullable fields)
+   * @return updated device representation
+   * @throws DeviceInUseException if current device state is IN_USE
+   */
   @Transactional
   public DeviceResponse update(Long id, DevicePatchRequest req) {
     Device device = findOrThrow(id);
@@ -42,11 +57,26 @@ public class DeviceService {
     return mapper.toResponse(repository.save(device));
   }
 
+  /**
+   * Finds a device by id or throws DeviceNotFoundException.
+   *
+   * @param id identifier
+   * @return device response
+   */
   @Transactional(readOnly = true)
   public DeviceResponse findById(Long id) {
     return mapper.toResponse(findOrThrow(id));
   }
 
+  /**
+   * Queries devices using the Specification pattern with optional filters, returning a paginated result.
+   * If state is not provided, defaults to AVAILABLE devices.
+   *
+   * @param brand optional brand filter
+   * @param state optional state filter
+   * @param pageable pagination and sorting config
+   * @return page of devices matching filters
+   */
   @Transactional(readOnly = true)
   public Page<DeviceResponse> findAll(String brand, DeviceStateEnum state, Pageable pageable) {
 
@@ -59,6 +89,12 @@ public class DeviceService {
         .map(mapper::toResponse);
   }
 
+  /**
+   * Performs a soft-delete by setting the device state to INACTIVE.
+   *
+   * @param id device identifier
+   * @throws DeviceInUseException if current device state is IN_USE
+   */
   @Transactional
   public void delete(Long id) {
     Device device = findOrThrow(id);
@@ -69,6 +105,9 @@ public class DeviceService {
     repository.save(device);
   }
 
+  /**
+   * Helper that retrieves a device or throws a domain-specific exception.
+   */
   private Device findOrThrow(Long id) {
     return repository.findById(id)
         .orElseThrow(() -> new DeviceNotFoundException("Device not found: " + id));

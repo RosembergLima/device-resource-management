@@ -1,199 +1,169 @@
 # Device Resources API
 
-A Spring Boot REST API to manage device resources in an organization. It supports creation, retrieval, partial update (PATCH), and soft-delete operations, with filtering and pagination. The project follows layered architecture (Controller → Service → Repository) and leverages MapStruct for mapping and the Specification pattern for dynamic queries.
+A robust Spring Boot REST API for managing device resources. This application demonstrates a clean architecture, comprehensive testing, and automated code quality analysis.
 
-## Table of Contents
-- Features
-- Tech Stack
-- Architecture & Design
-- API Documentation
-- Getting Started
-  - Prerequisites
-  - Run with PostgreSQL
-  - Run with Docker
-  - Profiles & Configuration
-- Database Migrations (Flyway)
-- Testing
-- Error Handling
-- Project Structure
-- Coding Conventions
+## 🚀 Features
 
-## Features
-- CRUD for devices with soft delete (state transition to INACTIVE)
-- Filtering by brand and state via query parameters
-- Pagination and sorting with Spring Data Pageable
-- OpenAPI/Swagger documentation via springdoc
-- Database migrations managed by Flyway
+- **Full CRUD Operations**: Manage devices with specialized endpoints.
+- **State Management**:
+  - Valid states: `AVAILABLE`, `IN_USE`, `INACTIVE`.
+  - **Soft-delete**: `DELETE` operations transition devices to the `INACTIVE` state rather than physical removal.
+  - **Business Rules**:
+    - `creation_time` is immutable and server-generated.
+    - Protected `name` and `brand` when a device is `IN_USE`.
+    - Default state is `AVAILABLE` if not provided during creation.
+- **Advanced Filtering**: Case-insensitive search by `brand` and filtering by `state`.
+- **Pagination & Sorting**: Built-in support using Spring Data Pageable.
+- **Partial Updates**: `PATCH` endpoint allowing updates to only specific fields.
+- **API Documentation**: Interactive Swagger UI and OpenAPI 3.0 specs.
+- **Database Migrations**: Versioned schema changes using Flyway.
+- **Containerization**: Fully dockerized environment including PostgreSQL and SonarQube.
 
-## Tech Stack
-- Java 21
-- Spring Boot
-  - spring-boot-starter-web
-  - spring-boot-starter-data-jpa
-  - spring-boot-starter-validation
-  - spring-boot-starter-flyway
-- PostgreSQL (production/runtime)
-- H2 (tests)
-- MapStruct (DTO/entity mapping)
-- Springdoc OpenAPI (Swagger UI)
-- Gradle
+## 🛠 Tech Stack
 
-## Architecture & Design
-- Controller-Service-Repository layering with DTOs
-- MapStruct for mapping Device ↔ DTOs
-- Specification pattern for dynamic filtering (brand, state)
-- Transaction boundaries at the service layer
-  - @Transactional(readOnly = true) at class level
-  - Write operations (create, update, delete) marked @Transactional
-- Soft delete implemented as a state transition to INACTIVE (no physical deletion)
+- **Java 21**: Leveraging the latest LTS features.
+- **Spring Boot 4.0.2**: Core framework for web, JPA, and validation.
+- **PostgreSQL 15.4**: Production-grade relational database.
+- **H2 Database**: Fast, in-memory database for unit and integration testing.
+- **MapStruct 1.6.3**: Type-safe bean mapping between Entities and DTOs.
+- **Springdoc OpenAPI 2.8.13**: Automatic generation of Swagger UI.
+- **Flyway**: Database schema migration tool.
+- **Lombok**: Reducing boilerplate code.
+- **Gradle**: Build automation tool.
 
-## API Documentation
-Swagger UI: http://localhost:8080/swagger-ui.html
-OpenAPI JSON: http://localhost:8080/api-docs
+## 🏗 Architecture & Design
 
-### Resource
-Base path: /devices
+The project follows a **Layered Architecture** to ensure separation of concerns:
+- **Controller Layer**: Handles HTTP requests and maps them to DTOs.
+- **Service Layer**: Contains business logic and manages transaction boundaries (`@Transactional`).
+- **Repository Layer**: Interfaces with the database using Spring Data JPA and Specifications for dynamic queries.
 
-### Data Model
-DeviceResponse
-- id: Long
-- name: String
-- brand: String
-- state: DeviceStateEnum (AVAILABLE, IN_USE, INACTIVE)
-- creationTime: Instant (server-generated)
+**Key Patterns:**
+- **DTO Pattern**: Decoupling the API contract from the internal database model.
+- **Specification Pattern**: Used for flexible, type-safe filtering of devices.
+- **Global Exception Handling**: Centralized error management returning consistent RFC-compliant JSON responses.
 
-DeviceRequest (POST)
-- name: String (required)
-- brand: String (required)
-
-DevicePatchRequest (PATCH)
-- name: String (optional)
-- brand: String (optional)
-- state: DeviceStateEnum (optional)
-
-### Endpoints
-1) POST /devices
-- Description: Create a new device
-- Status: 201 Created
-- Body: DeviceRequest
-- Response: DeviceResponse
-
-curl -X POST http://localhost:8080/devices \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"iPhone 15","brand":"Apple"}'
-
-2) GET /devices
-- Description: List devices with optional filtering and pagination
-- Status: 200 OK
-- Query params:
-  - brand (optional, case-insensitive)
-  - state (optional: AVAILABLE|IN_USE|INACTIVE)
-  - pageable params (page, size, sort)
-- Response: Page<DeviceResponse>
-
-curl 'http://localhost:8080/devices?brand=Apple&state=AVAILABLE&page=0&size=20&sort=name,asc'
-
-3) GET /devices/{id}
-- Description: Get a device by id
-- Status: 200 OK (404 if not found)
-- Response: DeviceResponse
-
-curl http://localhost:8080/devices/1
-
-4) PATCH /devices/{id}
-- Description: Partially update a device (only non-null fields are applied)
-- Status: 200 OK (400/404/409)
-- Body: DevicePatchRequest
-- Response: DeviceResponse
-
-curl -X PATCH http://localhost:8080/devices/1 \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"iPhone 15 Pro"}'
-
-5) DELETE /devices/{id}
-- Description: Soft delete (sets state to INACTIVE)
-- Status: 204 No Content (404/409)
-
-curl -X DELETE http://localhost:8080/devices/1
-
-## Getting Started
+## 🚦 Getting Started
 
 ### Prerequisites
-- Java 21
-- Gradle (wrapper included)
-- PostgreSQL running locally
+- **Docker Desktop** (or Docker Engine + Compose)
+- **Java 21** (if running locally without Docker)
 
-### Run with PostgreSQL
-1. Ensure a database exists (matches application.yml):
-   - URL: jdbc:postgresql://localhost:5432/device_management
-   - User: postgres
-   - Password: postgres
-2. Start the app:
+### 🐳 Run with Docker Compose (Recommended)
 
-./gradlew bootRun
+The easiest way to start the entire stack (API, PostgreSQL, SonarQube) is using Docker Compose:
 
-The application will apply Flyway migrations at startup and listen on port 8080.
-
-### Run with Docker
-- A Dockerfile and local/docker-compose.yml are provided. Example flow:
-
-cd local
-docker compose up -d
-
-Then build and run the app container or run the app locally pointing to the compose PostgreSQL service.
-
-### Profiles & Configuration
-- Main configuration: src/main/resources/application.yml
-- Test profile uses H2: src/test/resources/application-test.yml
-- Springdoc paths configured:
-  - Swagger UI: /swagger-ui.html
-  - OpenAPI: /api-docs
-
-## Database Migrations (Flyway)
-- SQL migrations live under src/main/resources/db/migration
-- At startup Flyway runs pending migrations before starting the application
-
-## Testing
-- Run unit/integration tests:
-
-./gradlew test
-
-- The test profile uses an in-memory H2 database and JPA/Hibernate
-
-## Error Handling
-- StandardError (for generic/business errors):
-  - timestamp, status, message, path
-- ValidationError (for @Valid failures):
-  - timestamp, status, error, path, fieldErrors[] { field, message }
-- Typical status codes:
-  - 201 Created (POST), 200 OK (GET/PATCH), 204 No Content (DELETE)
-  - 400 Bad Request (validation or business rule violations)
-  - 404 Not Found (resource not found)
-  - 409 Conflict (operation blocked by domain rules)
-
-## Project Structure
-- src/main/java/com/device
-  - controller: REST endpoints (DeviceController)
-  - service: business logic (DeviceService)
-  - repository: Spring Data JPA (DeviceRepository)
-  - specification: JPA Specifications (DeviceSpecifications)
-  - mapper: MapStruct mapper (DeviceMapper)
-  - dto: request/response records
-  - model: JPA entity (Device)
-  - config: OpenAPI configuration
-  - service/exception: error payloads and handlers
-- src/main/resources
-  - application.yml, Flyway migrations
-- src/test: tests and test profile config
-
-## Coding Conventions
-- RESTful resource naming and status codes
-- Query parameters for filtering collection resources
-- Pageable for lists to prevent unbounded queries
-- Constructor injection via Lombok @RequiredArgsConstructor
-- Entity with @Getter/@Setter instead of @Data, and controlled equals/hashCode
-- Service methods wrapped in @Transactional where appropriate
-- MapStruct for mapping; ignore nulls on PATCH
+1.  **Navigate to the local folder:**
+    ```bash
+    cd local
+    ```
+2.  **Start the services:**
+    ```bash
+    docker-compose up -d
+    ```
+3.  **Access the Application:**
+    - API: `http://localhost:8080/devices`
+    - Swagger UI: `http://localhost:8080/swagger-ui.html`
+    - SonarQube: `http://localhost:9000`
 
 ---
-If you have any questions or need additional examples (Postman collection, OpenAPI export), feel free to ask!
+
+## 📊 Code Quality & SonarQube
+
+Code quality is monitored using **SonarQube** integrated with **JaCoCo** for test coverage reports.
+
+### Step-by-Step: Running SonarQube Analysis
+
+Follow these steps to analyze the code quality and coverage:
+
+1.  **Start the SonarQube Infrastructure:**
+    Ensure the SonarQube container is running (it is included in the `docker-compose.yml` mentioned above).
+    ```bash
+    cd local
+    docker-compose up -d sonarqube
+    ```
+    *Wait a minute for SonarQube to fully initialize (check logs with `docker logs -f sonarqube`).*
+
+2.  **Login to SonarQube (Initial Setup):**
+    - Go to `http://localhost:9000`
+    - Login with **Username:** `admin` / **Password:** `admin`
+    - You will be prompted to change the password.
+
+3.  **Generate Test Coverage Report (JaCoCo):**
+    Before sending data to Sonar, we need to generate the JaCoCo XML report by running tests:
+    ```bash
+    ./gradlew test jacocoTestReport
+    ```
+    *The report will be generated at `build/reports/jacoco/test/jacocoTestReport.xml`.*
+
+4.  **Run Sonar Analysis:**
+    Execute the Sonar scan. You can use the local configuration or pass the token explicitly.
+
+    **Option A: Using the default command (requires local setup):**
+    ```bash
+    ./gradlew sonar
+    ```
+
+    **Option B: Full command with Token (Recommended for CI/CD or first run):**
+    ```bash
+    ./gradlew clean test jacocoTestReport sonar \
+      -Dsonar.token=YOUR_TOKEN_HERE \
+      -Dsonar.host.url=http://localhost:9000
+    ```
+
+5.  **How to get a Token in SonarQube:**
+    If you haven't generated a token yet:
+    1.  Log in to `http://localhost:9000`.
+    2.  Click on your **User Icon** (top right) > **My Account**.
+    3.  Go to the **Security** tab.
+    4.  In the **Tokens** section, enter a name (e.g., `local-dev`) and click **Generate**.
+    5.  **Copy the token immediately**, as you won't be able to see it again.
+
+6.  **View Results:**
+    Refresh `http://localhost:9000`. You will see the **"Devices API Challenge"** project with metrics for:
+    - **Bugs, Vulnerabilities, and Hotspots**.
+    - **Code Smells and Technical Debt**.
+    - **Code Coverage %** (calculated by JaCoCo).
+    - **Duplications**.
+
+---
+
+## 📖 API Documentation
+
+- **Swagger UI:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- **OpenAPI JSON:** [http://localhost:8080/api-docs](http://localhost:8080/api-docs)
+
+### Endpoints Summary
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/devices` | Create a new device |
+| `GET` | `/devices` | List all devices (paginated, filters: `brand`, `state`) |
+| `GET` | `/devices/{id}` | Get device by ID |
+| `PATCH` | `/devices/{id}` | Partially update a device |
+| `DELETE` | `/devices/{id}` | Soft-delete a device (sets state to `INACTIVE`) |
+
+---
+
+## 🧪 Testing
+
+The project includes a comprehensive test suite:
+- **Unit Tests**: Testing service logic in isolation (`DeviceServiceTest`).
+- **Integration Tests**: End-to-end API testing using H2/Testcontainers (`DeviceControllerIT`).
+
+Run all tests:
+```bash
+./gradlew test
+```
+
+## 🗄 Database Migrations
+
+Database schema is managed by **Flyway**.
+- Migration scripts are located in: `src/main/resources/db/migration`
+- They run automatically on application startup.
+
+## 🛠 Development Commands
+
+- **Build project:** `./gradlew build`
+- **Run locally (using local DB):** `./gradlew bootRun`
+- **Clean build:** `./gradlew clean build`

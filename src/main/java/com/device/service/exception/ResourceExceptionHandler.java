@@ -20,25 +20,25 @@ public class ResourceExceptionHandler {
    * @return 404 response containing a standardized error body
    */
   @ExceptionHandler(DeviceNotFoundException.class)
-  public ResponseEntity<StandardError> deviceNotFoundException(DeviceNotFoundException e, HttpServletRequest request){
-    log.warn("Device not found - uri={}, message={}", request.getRequestURI(), e.getMessage());
+  public ResponseEntity<StandardError> handleDeviceNotFound(DeviceNotFoundException e, HttpServletRequest request){
+    log.error("Device not found - uri={}, message={}", request.getRequestURI(), e.getMessage());
     StandardError err = new StandardError(System.currentTimeMillis(), HttpStatus.NOT_FOUND.value(),
         e.getMessage(), request.getRequestURI());
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
   }
 
   /**
-   * Handles attempts to modify or delete IN_USE devices and returns a 400 error payload.
+   * Handles attempts to modify or delete IN_USE devices and returns a 422 error payload.
    * @param e thrown exception
    * @param request current HTTP request
-   * @return 400 response with details about the business rule violation
+   * @return 422 response with details about the business rule violation
    */
   @ExceptionHandler(DeviceInUseException.class)
-  public ResponseEntity<StandardError> deviceInUseException(DeviceInUseException e, HttpServletRequest request){
-    log.warn("Device in use violation - uri={}, message={}", request.getRequestURI(), e.getMessage());
-    StandardError err = new StandardError(System.currentTimeMillis(), HttpStatus.BAD_REQUEST.value(),
+  public ResponseEntity<StandardError> handleDeviceInUse(DeviceInUseException e, HttpServletRequest request){
+    log.error("Device in use violation - uri={}, message={}", request.getRequestURI(), e.getMessage());
+    StandardError err = new StandardError(System.currentTimeMillis(), HttpStatus.UNPROCESSABLE_CONTENT.value(),
         e.getMessage(), request.getRequestURI());
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(err);
   }
 
   /**
@@ -48,12 +48,12 @@ public class ResourceExceptionHandler {
    * @return 400 response containing a ValidationError with field-level details
    */
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ValidationError> methodArgumentNotValidException(MethodArgumentNotValidException e, HttpServletRequest request){
+  public ResponseEntity<ValidationError> handleMethodArgumentNotValid(MethodArgumentNotValidException e, HttpServletRequest request){
     List<ValidationError.FieldError> fieldErrors = e.getBindingResult().getFieldErrors().stream()
         .map(fe -> new ValidationError.FieldError(fe.getField(), fe.getDefaultMessage()))
         .toList();
 
-    log.warn("Validation failed - uri={}, errors={} ", request.getRequestURI(), fieldErrors.size());
+    log.error("Validation failed - uri={}, errors={} ", request.getRequestURI(), fieldErrors.size());
 
     ValidationError err = new ValidationError(
         System.currentTimeMillis(),

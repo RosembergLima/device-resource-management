@@ -90,10 +90,14 @@ public class DeviceService {
   @Transactional(readOnly = true)
   public Page<DeviceResponse> findAll(String brand, DeviceStateEnum state, Pageable pageable) {
     log.info("Listing all devices with brand: {} and state: {}", brand, state);
-    DeviceStateEnum effectiveState = (state != null) ? state : DeviceStateEnum.AVAILABLE;
 
-    Specification<Device> spec = Specification.where(DeviceSpecifications.withBrand(brand))
-        .and(DeviceSpecifications.withState(effectiveState));
+    Specification<Device> spec = Specification.where(DeviceSpecifications.withBrand(brand));
+    if (state != null) {
+      spec = spec.and(DeviceSpecifications.withState(state));
+    } else {
+      spec = spec.and((root, query, cb) ->
+          cb.notEqual(root.get("state"), DeviceStateEnum.INACTIVE));
+    }
 
     return repository.findAll(spec, pageable)
         .map(mapper::toResponse);

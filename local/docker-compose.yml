@@ -1,4 +1,4 @@
-version: '3.9'  # versão moderna, sem aviso de obsoleto
+version: '3.9'
 
 services:
   postgres-app:

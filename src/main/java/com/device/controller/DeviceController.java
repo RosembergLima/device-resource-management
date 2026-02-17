@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("/devices")
+@RequestMapping("api/v1/devices")
 @RequiredArgsConstructor
 public class DeviceController {
 
@@ -110,7 +110,7 @@ public class DeviceController {
       content = @Content(schema = @Schema(implementation = DeviceResponse.class)))
   @ApiResponse(responseCode = "400", description = "Validation error", content = @Content)
   @ApiResponse(responseCode = "404", description = "Device not found", content = @Content)
-  @ApiResponse(responseCode = "409", description = "Device in use, cannot update", content = @Content)
+  @ApiResponse(responseCode = "422", description = "Device in use, cannot update", content = @Content)
   @PatchMapping("/{id}")
   @ResponseStatus(HttpStatus.OK)
   public DeviceResponse partialUpdate(@PathVariable Long id, @RequestBody DevicePatchRequest req) {
@@ -126,7 +126,7 @@ public class DeviceController {
   @Operation(summary = "Delete a device (soft delete sets state to INACTIVE)")
   @ApiResponse(responseCode = "204", description = "Device deleted")
   @ApiResponse(responseCode = "404", description = "Device not found", content = @Content)
-  @ApiResponse(responseCode = "409", description = "Device in use, cannot delete", content = @Content)
+  @ApiResponse(responseCode = "422", description = "Device in use, cannot delete", content = @Content)
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable Long id) {

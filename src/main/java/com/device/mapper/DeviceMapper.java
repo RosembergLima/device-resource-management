@@ -19,6 +19,7 @@ public interface DeviceMapper {
    */
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "creationTime", ignore = true)
+  @Mapping(target = "state", defaultValue = "AVAILABLE")
   Device toEntity(DeviceRequest dto);
 
   /**

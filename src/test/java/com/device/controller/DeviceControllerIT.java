@@ -52,7 +52,7 @@ class DeviceControllerIT {
 
     @Test
     void create_shouldReturn201() throws Exception {
-        DeviceRequest request = new DeviceRequest("Galaxy S24", "Samsung");
+        DeviceRequest request = new DeviceRequest("Galaxy S24", "Samsung", null);
 
         mockMvc.perform(post("/devices")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -110,7 +110,7 @@ class DeviceControllerIT {
 
     @Test
     void create_shouldReturn400_whenInvalidRequest() throws Exception {
-        DeviceRequest request = new DeviceRequest("", ""); // Blank name and brand
+        DeviceRequest request = new DeviceRequest("", "", null); // Blank name and brand
 
         mockMvc.perform(post("/devices")
                 .contentType(MediaType.APPLICATION_JSON)

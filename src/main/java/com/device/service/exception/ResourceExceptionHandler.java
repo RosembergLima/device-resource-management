@@ -2,12 +2,14 @@ package com.device.service.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+@Slf4j
 @ControllerAdvice
 public class ResourceExceptionHandler {
 
@@ -19,6 +21,7 @@ public class ResourceExceptionHandler {
    */
   @ExceptionHandler(DeviceNotFoundException.class)
   public ResponseEntity<StandardError> deviceNotFoundException(DeviceNotFoundException e, HttpServletRequest request){
+    log.warn("Device not found - uri={}, message={}", request.getRequestURI(), e.getMessage());
     StandardError err = new StandardError(System.currentTimeMillis(), HttpStatus.NOT_FOUND.value(),
         e.getMessage(), request.getRequestURI());
     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(err);
@@ -32,6 +35,7 @@ public class ResourceExceptionHandler {
    */
   @ExceptionHandler(DeviceInUseException.class)
   public ResponseEntity<StandardError> deviceInUseException(DeviceInUseException e, HttpServletRequest request){
+    log.warn("Device in use violation - uri={}, message={}", request.getRequestURI(), e.getMessage());
     StandardError err = new StandardError(System.currentTimeMillis(), HttpStatus.BAD_REQUEST.value(),
         e.getMessage(), request.getRequestURI());
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
@@ -48,7 +52,9 @@ public class ResourceExceptionHandler {
     List<ValidationError.FieldError> fieldErrors = e.getBindingResult().getFieldErrors().stream()
         .map(fe -> new ValidationError.FieldError(fe.getField(), fe.getDefaultMessage()))
         .toList();
-    
+
+    log.warn("Validation failed - uri={}, errors={} ", request.getRequestURI(), fieldErrors.size());
+
     ValidationError err = new ValidationError(
         System.currentTimeMillis(),
         HttpStatus.BAD_REQUEST.value(),
@@ -56,7 +62,7 @@ public class ResourceExceptionHandler {
         request.getRequestURI(),
         fieldErrors
     );
-    
+
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(err);
   }
 

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * REST controller exposing CRUD and query operations for Device resources.
  */
+@Slf4j
 @RestController
 @RequestMapping("/devices")
 @RequiredArgsConstructor
@@ -51,7 +53,10 @@ public class DeviceController {
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   public DeviceResponse create(@Valid @RequestBody DeviceRequest req) {
-    return service.create(req);
+    log.info("HTTP POST /devices - payload: name={}, brand={}, state={}", req.name(), req.brand(), req.state());
+    DeviceResponse resp = service.create(req);
+    log.debug("Created device with ID: {}", resp.id());
+    return resp;
   }
 
   /**
@@ -71,6 +76,8 @@ public class DeviceController {
       @Parameter(description = "Device state filter")
       @RequestParam(required = false) DeviceStateEnum state,
       @ParameterObject Pageable pageable) {
+    log.info("HTTP GET /devices - brand={}, state={}, page={}, size={}, sort={}", brand, state,
+        pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort());
     return service.findAll(brand, state, pageable);
   }
 
@@ -87,6 +94,7 @@ public class DeviceController {
   @GetMapping("/{id}")
   @ResponseStatus(HttpStatus.OK)
   public DeviceResponse findById(@PathVariable Long id) {
+    log.info("HTTP GET /devices/{}", id);
     return service.findById(id);
   }
 
@@ -106,6 +114,7 @@ public class DeviceController {
   @PatchMapping("/{id}")
   @ResponseStatus(HttpStatus.OK)
   public DeviceResponse partialUpdate(@PathVariable Long id, @RequestBody DevicePatchRequest req) {
+    log.info("HTTP PATCH /devices/{} - payload: {}", id, req);
     return service.update(id, req);
   }
 
@@ -121,6 +130,7 @@ public class DeviceController {
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable Long id) {
+    log.info("HTTP DELETE /devices/{}", id);
     service.delete(id);
   }
 }

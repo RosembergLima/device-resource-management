@@ -57,7 +57,7 @@ class DeviceServiceTest {
         .build();
 
     deviceResponse = new DeviceResponse(1L, "iPhone 15", "Apple", DeviceStateEnum.AVAILABLE, Instant.now());
-    deviceRequest = new DeviceRequest("iPhone 15", "Apple");
+    deviceRequest = new DeviceRequest("iPhone 15", "Apple", null);
   }
 
   @Nested

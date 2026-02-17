@@ -11,12 +11,14 @@ import com.device.service.exception.DeviceInUseException;
 import com.device.service.exception.DeviceNotFoundException;
 import com.device.specification.DeviceSpecifications;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -34,9 +36,11 @@ public class DeviceService {
    */
   @Transactional
   public DeviceResponse create(DeviceRequest req) {
+    log.info("Creating a new device with name: {} and brand: {} and state: {}", req.name(), req.brand(), req.state());
     Device device = mapper.toEntity(req);
-    device.setState(DeviceStateEnum.AVAILABLE);
-    return mapper.toResponse(repository.save(device));
+    Device savedDevice = repository.save(device);
+    log.debug("Successfully created device with ID: {}", savedDevice.getId());
+    return mapper.toResponse(savedDevice);
   }
 
   /**
@@ -49,12 +53,16 @@ public class DeviceService {
    */
   @Transactional
   public DeviceResponse update(Long id, DevicePatchRequest req) {
+    log.info("Updating device with ID: {}", id);
     Device device = findOrThrow(id);
     if (device.getState() == DeviceStateEnum.IN_USE) {
+        log.warn("Attempted to update device with ID: {} but it is currently IN_USE", id);
         throw new DeviceInUseException("Cannot update the device with state IN_USE");
     }
     mapper.updateEntityFromPatchDto(req, device);
-    return mapper.toResponse(repository.save(device));
+    Device updatedDevice = repository.save(device);
+    log.debug("Successfully updated device with ID: {}", id);
+    return mapper.toResponse(updatedDevice);
   }
 
   /**
@@ -65,7 +73,9 @@ public class DeviceService {
    */
   @Transactional(readOnly = true)
   public DeviceResponse findById(Long id) {
-    return mapper.toResponse(findOrThrow(id));
+    log.info("Searching for device with ID: {}", id);
+    Device device = findOrThrow(id);
+    return mapper.toResponse(device);
   }
 
   /**
@@ -79,7 +89,7 @@ public class DeviceService {
    */
   @Transactional(readOnly = true)
   public Page<DeviceResponse> findAll(String brand, DeviceStateEnum state, Pageable pageable) {
-
+    log.info("Listing all devices with brand: {} and state: {}", brand, state);
     DeviceStateEnum effectiveState = (state != null) ? state : DeviceStateEnum.AVAILABLE;
 
     Specification<Device> spec = Specification.where(DeviceSpecifications.withBrand(brand))
@@ -97,12 +107,15 @@ public class DeviceService {
    */
   @Transactional
   public void delete(Long id) {
+    log.info("Soft-deleting device with ID: {}", id);
     Device device = findOrThrow(id);
     if (device.getState() == DeviceStateEnum.IN_USE) {
+      log.warn("Attempted to delete device with ID: {} but it is currently IN_USE", id);
       throw new DeviceInUseException("In-use devices cannot be deleted");
     }
     device.setState(DeviceStateEnum.INACTIVE);
     repository.save(device);
+    log.debug("Device with ID: {} successfully set to INACTIVE", id);
   }
 
   /**
@@ -110,6 +123,9 @@ public class DeviceService {
    */
   private Device findOrThrow(Long id) {
     return repository.findById(id)
-        .orElseThrow(() -> new DeviceNotFoundException("Device not found: " + id));
+        .orElseThrow(() -> {
+          log.warn("Device not found with ID: {}", id);
+          return new DeviceNotFoundException("Device not found: " + id);
+        });
   }
 }

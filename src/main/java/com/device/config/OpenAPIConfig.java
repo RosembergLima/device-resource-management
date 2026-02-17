@@ -32,7 +32,7 @@ public class OpenAPIConfig {
             .title(title)
             .version(version)
             .description(description)
-            .license(new License().name("JCI/Sensormatics All rights reserved " + currentYear)));
+            .license(new License().name("Company XYZ All rights reserved " + currentYear)));
   }
 
 }

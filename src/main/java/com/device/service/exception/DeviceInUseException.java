@@ -1,4 +1,4 @@
-package com.oneglobal.service.exception;
+package com.device.service.exception;
 
 public class DeviceInUseException extends RuntimeException {
 

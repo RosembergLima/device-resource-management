@@ -1,6 +1,6 @@
-package com.oneglobal.dto;
+package com.device.dto;
 
-import com.oneglobal.enums.DeviceStateEnum;
+import com.device.enums.DeviceStateEnum;
 import java.time.Instant;
 
 public record DeviceResponse(Long id,

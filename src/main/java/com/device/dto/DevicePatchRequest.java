@@ -1,6 +1,6 @@
-package com.oneglobal.dto;
+package com.device.dto;
 
-import com.oneglobal.enums.DeviceStateEnum;
+import com.device.enums.DeviceStateEnum;
 
 public record DevicePatchRequest(String name,
                                  String brand,

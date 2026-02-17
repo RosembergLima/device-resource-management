@@ -1,4 +1,4 @@
-package com.oneglobal.dto;
+package com.device.dto;
 
 import com.oneglobal.enums.DeviceStateEnum;
 import jakarta.validation.constraints.NotBlank;

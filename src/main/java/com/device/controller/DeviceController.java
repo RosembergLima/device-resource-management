@@ -1,10 +1,10 @@
-package com.oneglobal.controller;
+package com.device.controller;
 
-import com.oneglobal.dto.DevicePatchRequest;
-import com.oneglobal.dto.DeviceRequest;
-import com.oneglobal.dto.DeviceResponse;
-import com.oneglobal.enums.DeviceStateEnum;
-import com.oneglobal.service.DeviceService;
+import com.device.dto.DevicePatchRequest;
+import com.device.dto.DeviceRequest;
+import com.device.dto.DeviceResponse;
+import com.device.enums.DeviceStateEnum;
+import com.device.service.DeviceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

@@ -1,6 +1,6 @@
-package com.oneglobal.model;
+package com.device.model;
 
-import com.oneglobal.enums.DeviceStateEnum;
+import com.device.enums.DeviceStateEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

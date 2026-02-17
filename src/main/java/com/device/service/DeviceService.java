@@ -1,14 +1,15 @@
-package com.oneglobal.service;
+package com.device.service;
 
-import com.oneglobal.dto.DevicePatchRequest;
-import com.oneglobal.dto.DeviceRequest;
-import com.oneglobal.dto.DeviceResponse;
-import com.oneglobal.enums.DeviceStateEnum;
-import com.oneglobal.mapper.DeviceMapper;
-import com.oneglobal.model.Device;
-import com.oneglobal.repository.DeviceRepository;
-import com.oneglobal.service.exception.DeviceInUseException;
-import com.oneglobal.service.exception.DeviceNotFoundException;
+import com.device.dto.DevicePatchRequest;
+import com.device.dto.DeviceRequest;
+import com.device.dto.DeviceResponse;
+import com.device.enums.DeviceStateEnum;
+import com.device.mapper.DeviceMapper;
+import com.device.model.Device;
+import com.device.repository.DeviceRepository;
+import com.device.service.exception.DeviceInUseException;
+import com.device.service.exception.DeviceNotFoundException;
+import com.device.specification.DeviceSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

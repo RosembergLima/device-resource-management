@@ -1,9 +1,9 @@
-package com.oneglobal.mapper;
+package com.device.mapper;
 
-import com.oneglobal.dto.DevicePatchRequest;
-import com.oneglobal.dto.DeviceRequest;
-import com.oneglobal.dto.DeviceResponse;
-import com.oneglobal.model.Device;
+import com.device.dto.DevicePatchRequest;
+import com.device.dto.DeviceRequest;
+import com.device.dto.DeviceResponse;
+import com.device.model.Device;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;

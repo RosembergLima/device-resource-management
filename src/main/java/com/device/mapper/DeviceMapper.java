@@ -18,10 +18,6 @@ public interface DeviceMapper {
 
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "creationTime", ignore = true)
-  void updateEntityFromDto(DeviceRequest dto, @MappingTarget Device entity);
-
-  @Mapping(target = "id", ignore = true)
-  @Mapping(target = "creationTime", ignore = true)
   void updateEntityFromPatchDto(DevicePatchRequest dto, @MappingTarget Device entity);
 
   DeviceResponse toResponse(Device entity);

@@ -13,6 +13,7 @@ import com.device.specification.DeviceSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,11 +28,12 @@ public class DeviceService {
   @Transactional
   public DeviceResponse create(DeviceRequest req) {
     Device device = mapper.toEntity(req);
+    device.setState(DeviceStateEnum.AVAILABLE);
     return mapper.toResponse(repository.save(device));
   }
 
   @Transactional
-  public DeviceResponse partialUpdate(Long id, DevicePatchRequest req) {
+  public DeviceResponse update(Long id, DevicePatchRequest req) {
     Device device = findOrThrow(id);
     if (device.getState() == DeviceStateEnum.IN_USE) {
         throw new DeviceInUseException("Cannot update the device with state IN_USE");
@@ -40,19 +42,21 @@ public class DeviceService {
     return mapper.toResponse(repository.save(device));
   }
 
+  @Transactional(readOnly = true)
   public DeviceResponse findById(Long id) {
     return mapper.toResponse(findOrThrow(id));
   }
 
+  @Transactional(readOnly = true)
   public Page<DeviceResponse> findAll(String brand, DeviceStateEnum state, Pageable pageable) {
-    if (brand != null && state != null) {
-      return repository.findByBrandIgnoreCaseAndState(brand, state, pageable).map(mapper::toResponse);
-    } else if (brand != null) {
-      return repository.findByBrandIgnoreCase(brand, pageable).map(mapper::toResponse);
-    } else if (state != null) {
-      return repository.findByState(state, pageable).map(mapper::toResponse);
-    }
-    return repository.findAll(pageable).map(mapper::toResponse);
+
+    DeviceStateEnum effectiveState = (state != null) ? state : DeviceStateEnum.AVAILABLE;
+
+    Specification<Device> spec = Specification.where(DeviceSpecifications.withBrand(brand))
+        .and(DeviceSpecifications.withState(effectiveState));
+
+    return repository.findAll(spec, pageable)
+        .map(mapper::toResponse);
   }
 
   @Transactional
@@ -61,7 +65,8 @@ public class DeviceService {
     if (device.getState() == DeviceStateEnum.IN_USE) {
       throw new DeviceInUseException("In-use devices cannot be deleted");
     }
-    repository.delete(device);
+    device.setState(DeviceStateEnum.INACTIVE);
+    repository.save(device);
   }
 
   private Device findOrThrow(Long id) {
